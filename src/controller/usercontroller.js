@@ -46,7 +46,7 @@ const createUser = async function (req, res) {
             });
         }
         //Extract body
-        let { fname, lname, email, phone, password, address, profileImage } =
+        let { fname, lname, email, phone, password, address } =
             requestBody;
 
         //-------Validation Starts-----------
@@ -131,12 +131,7 @@ const createUser = async function (req, res) {
                         status: false,
                         message: "Invalid request parameter, please provide street",
                     });
-                } else {
-                    return res.status(400).send({
-                        status: false,
-                        message:
-                            " Invalid request parameters. Shipping street cannot be empty",
-                    });
+                
                 }
             }
             if (address.shipping.city) {
@@ -145,34 +140,19 @@ const createUser = async function (req, res) {
                         status: false,
                         message: "Invalid request parameter, please provide city",
                     });
-                } else {
-                    return res.status(400).send({
-                        status: false,
-                        message:
-                            " Invalid request parameters. Shipping city cannot be empty",
-                    });
+                } 
                 }
-            }
+            
             if (address.shipping.pincode) {
                 if (!validator.isValidRequestBody(address.shipping.pincode)) {
                     return res.status(400).send({
                         status: false,
                         message: "Invalid request parameter, please provide pincode",
                     });
-                } else {
-                    return res.status(400).send({
-                        status: false,
-                        message:
-                            " Invalid request parameters. Shipping pincode cannot be empty",
-                    });
+                } 
                 }
-            } else
-                return res.status(400).send({
-                    status: false,
-                    message:
-                        " Invalid request parameters. Shipping address cannot be empty",
-                });
-        }
+            }
+
         if (address.billing) {
             if (address.billing.street) {
                 if (!validator.isValidRequestBody(address.billing.street)) {
@@ -181,12 +161,7 @@ const createUser = async function (req, res) {
                         message: "Invalid request parameter, please provide street",
                     });
                 }
-            } else {
-                return res.status(400).send({
-                    status: false,
-                    message:
-                        " Invalid request parameters. billing street cannot be empty",
-                });
+            } 
             }
             if (address.billing.city) {
                 if (!validator.isValidRequestBody(address.billing.city)) {
@@ -194,37 +169,29 @@ const createUser = async function (req, res) {
                         status: false,
                         message: "Invalid request parameter, please provide city",
                     });
-                } else {
-                    return res.status(400).send({
-                        status: false,
-                        message:
-                            " Invalid request parameters. billing city cannot be empty",
-                    });
-                }
-            }
+                } }
+                
+            
             if (address.billing.pincode) {
                 if (!validator.isValidRequestBody(address.billing.pincode)) {
                     return res.status(400).send({
                         status: false,
                         message: "Invalid request parameter, please provide pincode",
                     });
-                } else {
-                    return res.status(400).send({
-                        status: false,
-                        message:
-                            " Invalid request parameters. billing pincode cannot be empty",
-                    });
-                }
+                } 
             }
-        }
-        profileImage = await uploadFile(files[0]);
+        
+        const profileImage = await uploadFile(files[0]);
         password = await bcrypt.hash(password, saltRounds);
-           
+        console.log(profileImage)
        // const finalBody = { fname, lname, email, phone, password, address, profileImage }
-
-        let   user = await userModel.create(requestBody)
+         
+        let obj = requestBody
+        obj.profileImage = profileImage
+        obj.password = password
+        let   user = await userModel.create(obj)
         res.status(201).send({status:true , message : "user Created successfully" , data: user})
-    } catch (error) {
+        }catch (error) {
         res.status(500).send({ status: false, msg: error.message });
     }
 };
