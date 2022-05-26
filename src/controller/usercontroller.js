@@ -1,5 +1,5 @@
 const userModel = require("../model/userModel");
-const {validator} = require("../Validator/validators");
+const validator = require("../Validator/validators");
 const bcrypt = require("bcrypt")
 const saltRounds = 10;
 const jwt = require("jsonwebtoken");
@@ -46,6 +46,8 @@ const createUser = async function (req, res) {
                 message: "Invalid request parameter, please provide user Detaills",
             });
         }
+                // !Validator.isvalidrequestbody
+
         //Extract body
         let { fname, lname, email, phone, password, address } =
             requestBody;
@@ -157,9 +159,9 @@ const createUser = async function (req, res) {
                 } 
                 }
             }
-                  if (shipping) {
-                    if (shipping.pincode) {
-                      if (!validator.isValidPincode.test(shipping.pincode)) {
+                  if (address.shipping) {
+                    if (address.shipping.pincode) {
+                      if (!validator.isValidPincode.test(address.shipping.pincode)) {
                         return res
                           .status(400)
                           .send({ status: false, message: "enter valid pincode" });
@@ -263,6 +265,7 @@ const login = async (req, res) => {
         },"productmanagment-26",
         { expiresIn: "24hr" })
 
+        res.header("BearerToken", token);
 
         res.status(200).send({ status: true, msg: "successful login", data: { userId: user._id, token: token , } });
     } catch (error) {
@@ -409,12 +412,14 @@ const updateUser = async function (req, res) {
         if (shipping) {
           if (shipping.street) {
             updatedUser.address.shipping.street = shipping.street;
-          }
+          } if(!shipping.street){   return res .status(400).send({ status: false, message: "enter valid shipping street" }) }
           if (shipping.city) {
             updatedUser.address.shipping.city = shipping.city;
+            if(!shipping.city){   return res .status(400).send({ status: false, message: "enter valid shipping city" }) }
           }
           if (shipping.pincode) {
             updatedUser.address.shipping.pincode = shipping.pincode;
+            if(!shipping.pincode){   return res .status(400).send({ status: false, message: "enter valid shipping pincode" }) }
           }
         }
   
@@ -422,12 +427,17 @@ const updateUser = async function (req, res) {
         if (billing) {
           if (billing.street) {
             updatedUser.address.billing.street = billing.street;
-          }
+            if(!billing.street){   return res .status(400).send({ status: false, message: "enter valid billing street" }) }
+    }
           if (billing.city) {
             updatedUser.address.billing.city = billing.city;
+            if(!billing.city){   return res .status(400).send({ status: false, message: "enter valid billing city" }) }
+
           }
           if (billing.pincode) {
             updatedUser.address.billing.pincode = billing.pincode;
+            if(!billing.pincode){   return res .status(400).send({ status: false, message: "enter valid billing pincode" }) }
+
           }
         }
       }
@@ -444,5 +454,6 @@ const updateUser = async function (req, res) {
       return res.status(500).send({ status: false, message: err.message });
     }
   };
+
 
 module.exports ={createUser,login,getUserProfile,updateUser}

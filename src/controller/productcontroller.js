@@ -135,6 +135,121 @@ const createProduct = async (req, res) => {
     }
 }
 
+const filterProduct = async function (req, res) {
+    try {
+
+        const data = req.query
+        if (!validator.isValidRequestBody(data)) {
+            const allProducts = await productModel.find({ isDeleted: false })
+            if (!allProducts) {
+                return res.status(404).send({ status: false, message: "No products found" })
+            }
+            res.status(200).send({ status: true, message: "products fetched successfully", data: allProducts })
+        } else {
 
 
-module.exports={createProduct}
+
+            // let data =req.query
+            let availableSizes = req.query.size
+
+            let title = req.query.name
+
+            let priceGreaterThan = req.query.priceGreaterThan
+
+            let priceLessThan = req.query.priceLessThan
+
+            let filter = { isDeleted: false }
+
+            if (title) {
+                filter["title"] = title
+            }
+
+            if (availableSizes) {
+                const test = availableSizes.split(",")
+                console.log(test)
+                filter["availableSizes"] = test
+            }
+     
+
+            if (!priceGreaterThan && !priceLessThan) {
+                const productList = await productModel.find({ availableSizes: { $in: filter.availableSizes } })
+                return res.status(200).send({ status: true, message: "Products list", data: productList })
+            }
+
+            if (req.query.priceSort) {
+                if ((req.query.priceSort != 1 && req.query.priceSort != -1)) {
+                    return res.status(400).send({ status: false, message: 'use 1 for low to high and use -1 for high to low' })
+                }
+            }
+
+            if (priceGreaterThan && priceLessThan) {
+                const productList = await productModel.find({ $and: [filter, { price: { $gt: priceGreaterThan } }, { price: { $lt: priceLessThan } }] }).sort({ price: req.query.priceSort })
+                return res.status(200).send({ status: true, message: "Products list", data: productList })
+            }
+            if (priceGreaterThan) {
+                const productList = await productModel.find({ $and: [filter, { price: { $gt: priceGreaterThan } }] }).sort({ price: req.query.priceSort })
+                return res.status(200).send({ status: true, message: "Products list", data: productList })
+            }
+            if (priceLessThan) {
+                const productList = await productModel.find({ $and: [filter, { price: { $lt: priceLessThan } }] }).sort({ price: req.query.priceSort })
+                return res.status(200).send({ status: true, message: "Products list", data: productList })
+            }
+
+
+
+            if (!productList) {
+                return res.status(400).send({ status: true, message: "No available products" })
+            } else {
+                return res.status(200).send({ status: true, message: "Products list", data: productList })
+            }
+        }
+    }
+    catch (error) {
+        res.status(500).send({ status: false, Error: "Server not responding", message: error.message, });
+    }
+}
+
+const productById = async function (req, res) {
+    try {
+        const productId = req.params.productId
+
+        if (!productId) {
+            return res.status(400).send({ status: false, message: "Please provide product Id" })
+        }
+
+        if (!validator.isValidRequestBody(productId)) {
+            return res.status(400).send({ status: false, message: "Invalid product Id" })
+        }
+
+        const findProduct = await productModel.findOne({ _id: productId, isDeleted: false })
+
+        if (!findProduct) {
+            return res.status(404).send({ status: false, message: "Product not found or it maybe deleted" })
+        }
+        return res.status(200).send({ status: true, message: "Product details", data: findProduct })
+
+    }
+    catch (error) {
+        res.status(500).send({ status: false, Error: "Server not responding", message: error.message, });
+    }
+}
+
+
+const deleteProductbyid = async function (req, res) {
+    let Productid = req.params.productId;
+
+    let ProductDetails = await productModel.findById(Productid)
+    if (!ProductDetails) { return res.status(404).send({ status: false, msg: "This Product id are not exists" }) }
+    //check the Product data is deleted or not
+    if (ProductDetails.isDeleted == false) {
+        let deleted = await productModel.findByIdAndUpdate(Productid, { $set: { isDeleted: true, deletedAt: new String(Date()) } }, { new: true });
+        return res.status(200).send({ status: true, msg: "Deleted Successfully"}) // delete the Product data and update the deletedAt
+    } else {
+        return res.status(404).send({ status: false, msg: "this Product has already been deleted" })
+    }
+
+}
+
+
+
+module.exports={createProduct,productById,filterProduct,deleteProductbyid}

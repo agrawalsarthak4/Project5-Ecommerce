@@ -2,15 +2,15 @@ const jwt=require("jsonwebtoken");//(package to generate token)
 
 const authenticate=async function(req,res,next){
     try{
-        let token = req.headers["X-Api-Key"];
-        if (!token) {
-          token = req.headers["x-api-key"];
-        }
-        
+        const token = req.header('Authorization', 'Bearer Token')       
+
         if(!token) return res.status(403).send({status:false,msg:"Token is required"})
         
-        let decodedToken =jwt.verify(token, 'productmanagment-26',{ignoreExpiration:true})//error 500//.verify(decode and validat too)=.decode(only decode)
+        let T = token.split(' ')
+
+        let decodedToken =jwt.verify(T[1], "productmanagment-26",{ignoreExpiration:true})//error 500//.verify(decode and validat too)=.decode(only decode)
         
+        // 
         if(!decodedToken){
             return res.status(403).send({status:false,message:"Invalid authentication"})
         }
